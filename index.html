@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
-        body { background: linear-gradient(145deg, #fefaf5 0%, #fff5e8 100%); color:#1e1e2a; }
+        body { background: linear-gradient(145deg, #fefaf5 0%, #fff5e8 100%); }
         .container { max-width:1400px; margin:0 auto; padding:2rem 1.5rem; }
         .card { background:rgba(255,255,255,0.9); backdrop-filter:blur(4px); border-radius:36px; padding:1.8rem; margin-bottom:2rem; box-shadow:0 15px 35px -12px rgba(0,0,0,0.1); }
         h2 { font-size:1.8rem; margin-bottom:1.5rem; background:linear-gradient(135deg,#c47b2e,#a05e1f); background-clip:text; -webkit-background-clip:text; color:transparent; border-left:6px solid #c47b2e; padding-left:1rem; }
@@ -85,7 +85,6 @@
             <h2>Painel Administrativo</h2>
             <button id="adminLogout">Sair</button>
         </div>
-        <!-- Empresa -->
         <div class="card">
             <h2>🏪 Empresa</h2>
             <input id="compName" placeholder="Nome do Restaurante">
@@ -96,7 +95,6 @@
             <input id="compWhatsapp" placeholder="WhatsApp (com código do país)">
             <button id="saveCompanyBtn">Salvar Empresa</button>
         </div>
-        <!-- Cardápio -->
         <div class="card">
             <h2>🍽️ Cardápio</h2>
             <button id="newDishBtn">+ Novo Item</button>
@@ -112,14 +110,12 @@
             </div>
             <div id="dishesAdminList"></div>
         </div>
-        <!-- Freezer -->
         <div class="card">
             <h2>📸 Freezer da Semana</h2>
             <input type="file" id="freezerUpload" accept="image/*">
             <button id="addFreezerBtn">Adicionar Foto</button>
             <div id="freezerAdminList"></div>
         </div>
-        <!-- Pedidos -->
         <div class="card">
             <h2>📦 Pedidos Recebidos</h2>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem;">
@@ -131,7 +127,6 @@
             </div>
             <div id="ordersList"></div>
         </div>
-        <!-- Estatísticas -->
         <div class="card">
             <h2>📊 Estatísticas</h2>
             <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
@@ -144,13 +139,11 @@
             <h3>🥇 Itens mais pedidos</h3>
             <canvas id="topItemsChart" height="180"></canvas>
         </div>
-        <!-- Utilizadores -->
         <div class="card">
             <h2>👥 Utilizadores</h2>
             <button id="registerUserBtn">+ Registrar Novo Utilizador</button>
             <div id="usersList"></div>
         </div>
-        <!-- Backup (exportar/importar dados como JSON) -->
         <div class="card">
             <h2>💾 Backup Manual</h2>
             <button id="exportDataBtn">Exportar Dados (JSON)</button>
@@ -199,13 +192,13 @@
 
 <script>
     // ==================== CONFIGURAÇÃO SUPABASE ====================
-    const SUPABASE_URL = 'https://ivdqczmvcxeaqdojmwtw.supabase.co';      // SUBSTITUA
-    const SUPABASE_ANON_KEY = 'sb_publishable_o_7CF32ImdS0GZDzCpmuVA_D-7E0JfT';                   // SUBSTITUA
+    const SUPABASE_URL = 'https://ivdqczmvcxeaqdojmwtw.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_o_7CF32ImdS0GZDzCpmuVA_D-7E0JfT';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const STORAGE_BUCKET = 'restaurant-images';
 
     // ==================== ESTADO GLOBAL ====================
-    let currentUser = null;        // { id, name, role }
+    let currentUser = null;
     let cart = [];
     let editingDishId = null;
     let featuredInterval, freezerInterval;
@@ -217,7 +210,7 @@
     function showToast(msg) { let t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]); }
 
-    // Upload de imagem para o Storage do Supabase e retorna a URL pública
+    // Upload de imagem para o Storage do Supabase
     async function uploadImage(file, folder) {
         if (!file) return null;
         const ext = file.name.split('.').pop();
@@ -382,7 +375,7 @@
         if (error) throw error;
     }
 
-    // ==================== RENDER CLIENTE (PÚBLICO) ====================
+    // ==================== RENDER CLIENTE ====================
     async function renderCustomer() {
         const company = await loadCompany();
         const dishes = await loadDishes();
@@ -390,30 +383,27 @@
         // Header
         const headerDiv = document.getElementById('restaurantHeader');
         headerDiv.innerHTML = `
-            <div>${company.logo_url ? `<img src="${company.logo_url}" class="logo-img">` : '<div class="logo-img" style="background:#e5e7eb; display:flex; align-items:center; justify-content:center;"><i class="fas fa-utensils" style="font-size:2.5rem; color:#c47b2e;"></i></div>'}</div>
-            <h1>${escapeHtml(company.name)}</h1>
+            <div>${company?.logo_url ? `<img src="${company.logo_url}" class="logo-img">` : '<div class="logo-img" style="background:#e5e7eb; display:flex; align-items:center; justify-content:center;"><i class="fas fa-utensils" style="font-size:2.5rem; color:#c47b2e;"></i></div>'}</div>
+            <h1>${escapeHtml(company?.name || 'Meu Restaurante')}</h1>
             <div class="contact-info">
-                <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(company.address)}</span>
-                <span><i class="fas fa-envelope"></i> ${escapeHtml(company.email)}</span>
-                <span><i class="fab fa-whatsapp"></i> <a href="https://wa.me/${company.whatsapp.replace(/\D/g,'')}" target="_blank">Pedir via WhatsApp</a></span>
+                <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(company?.address || '')}</span>
+                <span><i class="fas fa-envelope"></i> ${escapeHtml(company?.email || '')}</span>
+                <span><i class="fab fa-whatsapp"></i> <a href="https://wa.me/${(company?.whatsapp || '').replace(/\D/g,'')}" target="_blank">Pedir via WhatsApp</a></span>
             </div>
         `;
-        // Busca
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const comidas = dishes.filter(d => d.category === 'comida' && (d.name.toLowerCase().includes(searchTerm) || d.description.toLowerCase().includes(searchTerm)));
-        const bebidas = dishes.filter(d => d.category === 'bebida' && (d.name.toLowerCase().includes(searchTerm) || d.description.toLowerCase().includes(searchTerm)));
-        // Grids
+        const comidas = dishes.filter(d => d.category === 'comida' && (d.name.toLowerCase().includes(searchTerm) || (d.description || '').toLowerCase().includes(searchTerm)));
+        const bebidas = dishes.filter(d => d.category === 'bebida' && (d.name.toLowerCase().includes(searchTerm) || (d.description || '').toLowerCase().includes(searchTerm)));
         document.getElementById('foodsGrid').innerHTML = comidas.map(d => `
             <div class="dish-card" data-id="${d.id}">
                 <div class="dish-img-container"><img src="${d.image_url || 'https://placehold.co/400x300?text=Prato'}" onerror="this.src='https://placehold.co/400x300'"></div>
-                <div style="padding:1rem;"><h3>${escapeHtml(d.name)}</h3><p>${escapeHtml(d.description?.substring(0,70) || '')}</p><div class="price">${formatKz(d.price)}</div><button class="add-cart-btn" data-id="${d.id}">Pedir</button><button class="detail-btn" data-id="${d.id}">Detalhes</button></div>
+                <div style="padding:1rem;"><h3>${escapeHtml(d.name)}</h3><p>${escapeHtml((d.description || '').substring(0,70))}</p><div class="price">${formatKz(d.price)}</div><button class="add-cart-btn" data-id="${d.id}">Pedir</button><button class="detail-btn" data-id="${d.id}">Detalhes</button></div>
             </div>`).join('');
         document.getElementById('drinksGrid').innerHTML = bebidas.map(d => `
             <div class="dish-card" data-id="${d.id}">
                 <div class="dish-img-container"><img src="${d.image_url || 'https://placehold.co/400x300?text=Bebida'}" onerror="this.src='https://placehold.co/400x300'"></div>
                 <div style="padding:1rem;"><h3>${escapeHtml(d.name)}</h3><div class="price">${formatKz(d.price)}</div><button class="add-cart-btn" data-id="${d.id}">Pedir</button><button class="detail-btn" data-id="${d.id}">Detalhes</button></div>
             </div>`).join('');
-        // Eventos dos botões
         document.querySelectorAll('.add-cart-btn').forEach(btn => btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const id = btn.dataset.id;
@@ -438,7 +428,6 @@
                 document.getElementById('closeDetailBtn').onclick = () => document.getElementById('detailModal').style.display = 'none';
             }
         }));
-        // Carrosséis
         const featuredDishes = dishes.filter(d => d.featured);
         renderCarousel('featuredSlide', featuredDishes.map(d => ({ image: d.image_url })), 'featuredPrev', 'featuredNext', (interval) => { if (featuredInterval) clearInterval(featuredInterval); featuredInterval = interval; });
         renderCarousel('freezerSlide', freezer.map(f => ({ image: f.image_url })), 'freezerPrev', 'freezerNext', (interval) => { if (freezerInterval) clearInterval(freezerInterval); freezerInterval = interval; });
@@ -462,11 +451,11 @@
     // ==================== RENDER ADMIN ====================
     async function renderAdmin() {
         const company = await loadCompany();
-        document.getElementById('compName').value = company.name || '';
-        document.getElementById('compAddress').value = company.address || '';
-        document.getElementById('compEmail').value = company.email || '';
-        document.getElementById('compWhatsapp').value = company.whatsapp || '';
-        if (company.logo_url) document.getElementById('logoPreview').src = company.logo_url;
+        document.getElementById('compName').value = company?.name || '';
+        document.getElementById('compAddress').value = company?.address || '';
+        document.getElementById('compEmail').value = company?.email || '';
+        document.getElementById('compWhatsapp').value = company?.whatsapp || '';
+        if (company?.logo_url) document.getElementById('logoPreview').src = company.logo_url;
         const dishes = await loadDishes();
         const dishesHtml = dishes.map(d => `
             <div class="admin-item">
@@ -588,7 +577,7 @@
         await createOrder(order);
         const company = await loadCompany();
         const msg = `*NOVO PEDIDO*\nCliente: ${customerName}\nEndereço: ${address || '---'}\nItens:\n${items.map(i => `${i.name} x${i.qty}`).join('\n')}\nTotal: ${formatKz(total)}\nObs: ${note}`;
-        const phone = company.whatsapp.replace(/\D/g, '');
+        const phone = company?.whatsapp?.replace(/\D/g, '') || '';
         if (phone) window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         showToast('Pedido enviado com sucesso!');
         cart = [];
@@ -627,7 +616,7 @@
         document.getElementById('sendOrderBtn').addEventListener('click', submitOrder);
         // Botão Admin flutuante
         const adminBtn = document.createElement('div');
-        adminBtn.style.cssText = 'position:fixed; bottom:20px; left:20px; background:#2d2d3a; color:white; border-radius:40px; padding:8px 16px; cursor:pointer; z-index:99;';
+        adminBtn.style.cssText = 'position:fixed; bottom:20px; left:20px; background:#2d2d3a; color:white; border-radius:40px; padding:8px 16px; cursor:pointer; z-index:99; font-size:14px;';
         adminBtn.innerHTML = '<i class="fas fa-lock"></i> Admin';
         adminBtn.onclick = loginAdmin;
         document.body.appendChild(adminBtn);
@@ -729,8 +718,8 @@
         });
         document.getElementById('resetDataBtn').addEventListener('click', async () => {
             if (confirm('ATENÇÃO: Isso vai apagar todos os dados e restaurar o padrão. Confirmar?')) {
-                // Executar SQL de reset (opcional, pode recriar manualmente)
-                showToast('Use a função de importar com um backup ou recrie manualmente');
+                // Opcional: executar SQL de reset, mas por simplicidade apenas recarregar a página?
+                showToast('Função de reset manual: utilize o backup para restaurar.');
             }
         });
         // Botão voltar ao topo
